@@ -1,0 +1,82 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>Đăng Nhập</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.3/css/bootstrap.min.css" />
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: .5rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2 class="text-center mb-4">Đăng Nhập</h2>
+        <form id="loginForm">
+            <div class="mb-3">
+                <label for="username" class="form-label">Tên người dùng</label>
+                <input type="text" class="form-control" id="username" name="Username" placeholder="Nhập tên người dùng" required />
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Mật khẩu</label>
+                <input type="password" class="form-control" id="password" name="Password" placeholder="Nhập mật khẩu" required />
+            </div>
+            <div class="d-flex justify-content-between mb-3">
+                <a href="#" class="text-primary">Quên mật khẩu?</a>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Đăng Nhập</button>
+        </form>
+    </div>
+   
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#loginForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var formData = {
+                    Username: $('#username').val(),
+                    Password: $('#password').val()
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Login/Login',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function (response) {
+                        if (response.success) {
+                            window.location.href = response.redirectUrl;
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

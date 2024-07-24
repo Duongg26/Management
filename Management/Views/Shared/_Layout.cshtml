@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail</title>
+    <!-- Link Bootstrap CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Link jQuery -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <!-- Link Bootstrap JS -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        .container-fluid {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        .user-greeting {
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: '@Url.Action("GetFunctions", "Home")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (result) {
+                    var functionsMenu = $('#functionsMenu');
+                    functionsMenu.empty();
+                    if (result.data && result.data.length > 0) {
+                        $.each(result.data, function (index, item) {
+                            functionsMenu.append(
+                                $('<li>').addClass('nav-item').append(
+                                    $('<a>').addClass('nav-link')
+                                        .attr('href', item.link)
+                                        .text(item.description)
+                                )
+                            );
+                        });
+                    } else {
+                        functionsMenu.append(
+                            $('<li>').addClass('nav-item').text(result.message || 'Không có chức năng nào.')
+                        );
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching functions:", error);
+                }
+            });
+        });
+    </script>
+
+</head>
+<body>
+    <div class="container-fluid">
+        <header>
+            <nav class="navbar navbar-expand-md navbar-light bg-light border-bottom">
+                <div class="container">
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav"
+                            aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <!-- Có thể thêm liên kết khác nếu cần -->
+                    </div>
+                    <div class="user-greeting d-none d-md-block">
+                        Xin chào, @ViewBag.Name
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <div class="row flex-grow-1">
+            <nav class="col-md-2 col-lg-3 bg-light border-right py-3">
+                <h5 class="px-3">Danh mục</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-bs-toggle="collapse" data-bs-target="#functionsMenu" aria-expanded="false" aria-controls="functionsMenu">
+                            Danh sách chức năng
+                        </a>
+                        <ul id="functionsMenu" class="collapse">
+                            <!-- Danh sách chức năng sẽ được nạp ở đây -->
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/UserInfo">Thông tin người dùng</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ChangePassword">Đổi mật khẩu</a>
+                    </li>
+                </ul>
+            </nav>
+            <main class="col-md-10 col-lg-9 py-3">
+                @RenderBody()
+            </main>
+        </div>
+        <footer class="border-top bg-light py-3 mt-auto">
+            <div class="container text-center">
+                &copy; 2024 - QLNV
+            </div>
+        </footer>
+    </div>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

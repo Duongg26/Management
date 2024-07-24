@@ -1,0 +1,332 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Danh Sách Tài Khoản</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" />
+    <style>
+        .btn-custom {
+            margin-right: 5px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">Danh sách tài khoản</h1>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Họ và tên</th>
+                    <th>Tên đăng nhập</th>
+                    <th>Chức vụ</th>
+                    <th>Trạng thái</th>
+                    <th>Quê quán</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="accountsTableBody">
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+        <button id="addButton" type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#Modal" onclick="addAccount()">Thêm mới</button>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="Modal" tabindex="-1" aria-labelledby="accountDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accountDetailModalLabel">Chi Tiết Tài Khoản</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="accountForm">
+                        <div class="mb-3">
+                            <label for="accountId" class="form-label">ID</label>
+                            <input type="text" class="form-control" id="accountId" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="accountName" class="form-label">Tên</label>
+                            <input type="text" class="form-control" id="accountName">
+                        </div>
+                        <div class="mb-3">
+                            <label for="accountUName" class="form-label">Tên đăng nhập</label>
+                            <input type="text" class="form-control" id="accountUName">
+                        </div>
+                        <div id="passfield" style="display: none;">
+                            <div class="mb-3">
+                                <label for="accountPass" class="form-label">Mật khẩu</label>
+                                <input type="password" class="form-control" id="accountPass">
+                            </div>
+                            <div class="mb-3">
+                                <label for="accountPass2" class="form-label">Mật khẩu 2</label>
+                                <input type="password" class="form-control" id="accountPass2">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="accountAddr" class="form-label">Địa chỉ</label>
+                            <input type="text" class="form-control" id="accountAddr">
+                        </div>
+                        <div class="mb-3">
+                            <label for="accountRole" class="form-label">Vai trò</label>
+                            <select class="form-select" id="accountRole">
+                                <option value="1">Admin</option>
+                                <option value="0">User</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="accountStatus" class="form-label">Trạng thái</label>
+                            <select class="form-select" id="accountStatus">
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" id="updateList" class="btn btn-primary" onclick="updateList()">Cập nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+ //Hiển thị toàn bộ danh sách
+            $.ajax({
+                url: '@Url.Action("GetAllAccount", "Account")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (result) {
+                    var tableBody = $('#accountsTableBody');
+                    tableBody.empty(); 
+
+                    if (result.data && result.data.length > 0) {
+                        $.each(result.data, function (index, account) {
+                            tableBody.append(
+                                $('<tr>').append(
+                                    $('<td>').text(account.id),
+                                    $('<td>').text(account.name),
+                                    $('<td>').text(account.uname),
+                                    $('<td>').text(account.role == 1 ? 'Admin' : 'User'),
+                                     $('<td>').text(account.status == 1 ? 'Active' : 'InActive'),
+                                    $('<td>').text(account.addr),
+                                    $('<td>').append(
+                                        $('<button>')
+                                            .addClass('btn btn-info btn-sm btn-custom')
+                                            .text('Sửa')
+                                            .attr('id', 'editButton')
+                                            .attr('data-id', account.id)
+                                            .attr('data-bs-toggle', 'modal') 
+                                            .attr('data-bs-target', '#Modal') 
+                                            .on('click', function () {
+                                                var accId = account.id;
+                                               
+                                                editAccount(accId);
+                                            }),
+                                        $('<button>').addClass('btn btn-danger btn-sm btn-custom')
+                                            .text('Xóa')
+                                            .attr('id', 'deleteButton')
+                                            .attr('data-id', account.id)
+                                            .attr('data-toggle', 'modal')
+                                            .attr('data-target', '#Modal')
+                                            .on('click', function () {
+                                                deleteAccount($(this).data('id'));
+                                            })
+                                    )
+                                )
+                            );
+                        });
+                    } else {
+                        tableBody.append(
+                            $('<tr>').append(
+                                $('<td>').attr('colspan', '5').text('Không có tài khoản nào.')
+                            )
+                        );
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching accounts:", error);
+                }
+            });
+   //Hiển thị chức năng
+        $.ajax({
+            url: '@Url.Action("GetChucNang", "Account")',
+            type: 'GET',
+            dataType: 'json',
+            success: function (result) {
+                
+                if (result.data.isAdd === 1) {
+                    $('#addButton').show();
+                } else {
+                    $('#addButton').hide();
+                }
+                if (result.data.isEdit === 1) {
+                    $('#editButton').show();
+                } else {
+                    $('#editButton').hide();
+                }
+                if (result.data.isDelete === 1) {
+                    $('#deleteButton').show();
+                } else {
+                    $('#deleteButton').hide();
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Error fetching data:", error); // Xử lý lỗi
+            }
+        });
+   //
+           
+  //Hiển thị form cập nhật
+           
+            function editAccount(accId) {
+                
+                $('#passfield').hide();
+                $.ajax({
+                    url: '@Url.Action("GetAccById", "Account")',
+                    type: 'GET',
+                    data: { id: accId },
+                    dataType: 'json',
+                    success: function (response) {
+
+                        if (response && response.data) {
+                            var acc = response.data;
+
+
+                            $('#accountId').val(acc.id);
+                            $('#accountUName').val(acc.uname);
+                            $('#accountName').val(acc.name);
+                            $('#accountRole').val(acc.role);
+                            $('#accountStatus').val(acc.status);
+                            $('#accountAddr').val(acc.addr);
+
+
+                            $('#editModal').modal('show');
+                        } else {
+                            console.error('No data received');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+
+                        console.error('Error occurred:', error);
+                    }
+                });
+
+
+                $('#updateList').click(updateList);
+                function updateList() {
+                    var accId = $('#accountId').val();
+                    var uname = $('#accountUName').val();
+                    var name = $('#accountName').val();
+                    var role = $('#accountRole').val();
+                    var status = $('#accountStatus').val();
+                    var addr = $('#accountAddr').val();
+
+                    var accountData = {
+                        Id: accId,
+                        UName: uname,
+                        Name: name,
+                        Role: role,
+                        Status: status,
+                        Addr: addr
+                    };
+
+                    if (confirm('Bạn có chắc chắn muốn cập nhật thông tin tài khoản này?')) {
+                        $.ajax({
+                            url: '@Url.Action("UpdateAccById", "Account")',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(accountData),
+                            success: function (response) {
+
+                                $('#editModal').modal('hide');
+                                alert('Tài khoản đã được cập nhật thành công.');
+                            },
+                            error: function (xhr, status, error) {
+                                alert('Cập nhật tài khoản thất bại: ' + xhr.responseText);
+                            }
+                        });
+                    } else {
+                        console.log('Cập nhật bị hủy');
+                    }
+                }
+
+            
+            }
+
+
+            $('#addButton').click(addAccount);
+
+
+
+            function addAccount() {
+                $('#passfield').show();  // Hiển thị trường mật khẩu nếu cần
+
+                function updateList() {
+                    var uname = $('#accountUName').val();
+                    var name = $('#accountName').val();
+                    var role = $('#accountRole').val();
+                    var status = $('#accountStatus').val();
+                    var addr = $('#accountAddr').val();
+                    var pass = $('#accountPass').val();
+                    var pass2 = $('#accountPass2').val();
+
+                    // Ghi lại dữ liệu để kiểm tra
+                    console.log({
+                        UName: uname,
+                        Name: name,
+                        Role: role,
+                        Status: status,
+                        Addr: addr,
+                        pass: pass,
+                        pass2: pass2
+                    });
+                    $('#updateList').click(updateList);
+                    function updateList() {
+                        if (confirm('Bạn có chắc chắn muốn cập nhật thông tin tài khoản này?')) {
+                            $.ajax({
+                                url: '@Url.Action("AddAccount", "Account")',
+                                type: 'POST',
+                                contentType: 'application/json',
+                                data: JSON.stringify({
+                                    UName: uname,
+                                    Name: name,
+                                    Role: role,
+                                    Status: status,
+                                    Addr: addr,
+                                    pass: pass,
+                                    pass2: pass2
+                                }),
+                                success: function (response) {
+                                    $('#editModal').modal('hide');
+                                    alert('Tài khoản đã được cập nhật thành công.');
+                                },
+                                error: function (xhr, status, error) {
+                                    alert('Cập nhật tài khoản thất bại: ' + xhr.responseText);
+                                }
+                            });
+                        } else {
+                            console.log('Cập nhật bị hủy');
+                        }
+                    }
+
+                }
+
+
+            }
+ 
+    });
+    </script>
+</body>
+</html>
