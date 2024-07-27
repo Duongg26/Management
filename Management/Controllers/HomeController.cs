@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using QLNV.Data;
 using QLNV.Models;
+using QLNV.Models.Entities;
 using System.Diagnostics;
 
 namespace QLNV.Controllers
@@ -22,9 +23,12 @@ namespace QLNV.Controllers
         {
 
             var name = HttpContext.Session.GetString("Name");
+            var addr = HttpContext.Session.GetString("Addr");
+            var role = HttpContext.Session.GetString("RoleName");
 
             ViewBag.Name = name;
-
+            ViewBag.Addr = addr;
+            ViewBag.Role = role;
             return View();
         }
 
@@ -32,25 +36,27 @@ namespace QLNV.Controllers
 
         public IActionResult GetFunctions()
         {
-            var id = HttpContext.Session.GetInt32("Id");
-            if (id == null)
+            var accountId = HttpContext.Session.GetInt32("Id");
+
+            if (accountId == null)
             {
-                return BadRequest("Error: No user ID in session");
+                return BadRequest("Error: No account ID in session");
             }
 
-            var phanQuyen = _context.PhanQuyen
-                .Where(pq => pq.AccountId == id)
+            
+            var roleIds = _context.PhanQuyen
+                .Where(pq => pq.AccountId == accountId&&pq.IsRead==1)
+                .Select(pq => pq.IdCn)
                 .ToList();
 
-            if (!phanQuyen.Any())
+            if (!roleIds.Any())
             {
-                return Json(new { data = new List<FunctionViewModel>(), message = "No permissions" });
+                return Json(new { data = new List<FunctionViewModel>(), message = "No functions found" });
             }
 
-            var functionIds = phanQuyen.Select(pq => pq.FunctionsId).ToList();
-
-            var functions = _context.Functions
-                .Where(f => functionIds.Contains(f.Id))
+            // Lấy các chức năng từ bảng ChucNang dựa trên danh sách IdCn
+            var functions = _context.ChucNang
+                .Where(cn => roleIds.Contains(cn.Id))
                 .ToList();
 
             if (!functions.Any())
@@ -58,14 +64,16 @@ namespace QLNV.Controllers
                 return Json(new { data = new List<FunctionViewModel>(), message = "No functions found" });
             }
 
+            // Map dữ liệu sang ViewModel
             var model = functions.Select(f => new FunctionViewModel
             {
                 Description = f.Description,
-                Link=f.Link
+                Link = f.Link
             }).ToList();
 
             return Json(new { data = model });
         }
+
 
 
 

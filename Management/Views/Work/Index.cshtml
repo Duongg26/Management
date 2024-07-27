@@ -1,0 +1,280 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Danh Sách Tài Khoản</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" />
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">Danh sách tài khoản</h1>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Chức vụ</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="accountsTableBody">
+               
+            </tbody>
+        </table>
+
+        <nav aria-label="Page navigation">
+            <ul class="pagination" id="paginationControls">
+             
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Modal Giao nhiệm vụ -->
+    <div class="modal fade" id="assignTaskModal" tabindex="-1" aria-labelledby="assignTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assignTaskModalLabel">Giao nhiệm vụ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="assignTaskForm">
+                        <input type="hidden" id="accountId" />
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">Mô tả nhiệm vụ</label>
+                            <textarea class="form-control" id="taskDescription" rows="3" required></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <input type="hidden" id="modalAccountId" value="">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" id="Task" class="btn btn-primary" onclick="Task()">Giao nhiệm vụ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xem chi tiết -->
+    <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskDetailModalLabel">Chi tiết nhiệm vụ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="taskDetails">
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const pageSize = 5;
+            let currentPage = 1;
+
+           
+            function loadAccounts(page) {
+                $.ajax({
+                    url: '@Url.Action("GetAllAccount", "Account")',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: { pageNumber: page, pageSize: pageSize },
+                    success: function (result) {
+                        var tableBody = $('#accountsTableBody');
+                        tableBody.empty();
+
+                        if (result.data && result.data.length > 0) {
+                            $.each(result.data, function (index, account) {
+                                var row = $('<tr>').append(
+                                    $('<td>').text(account.id),
+                                    $('<td>').text(account.name),
+                                    $('<td>').text(account.role === 1 ? 'Admin' : 'User'),
+                                    $('<td>').append(
+                                        $('<button>')
+                                            .addClass('btn btn-info btn-sm')
+                                            .text('Xem chi tiết')
+                                            .attr('id', 'editButton-' + account.id)
+                                            .attr('data-id', account.id)
+                                            .attr('data-bs-toggle', 'modal')
+                                            .attr('data-bs-target', '#taskDetailModal')
+                                            .on('click', function () {
+                                                var accId = account.id;
+                                                showTask(accId);
+                                            }),
+                                        $('<button>')
+                                            .addClass('btn btn-success btn-sm ms-2')
+                                            .text('Giao nhiệm vụ')
+                                            .attr('id', 'assignTaskButton-' + account.id)
+                                            .attr('data-id', account.id)
+                                            .attr('data-bs-toggle', 'modal')
+                                            .attr('data-bs-target', '#assignTaskModal')
+                                            .on('click', function () {
+                                                var accId = $(this).attr('data-id');
+                                                $('#modalAccountId').val(accId);
+                                            })
+                                    )
+                                );
+                                tableBody.append(row);
+                            });
+
+                            updatePaginationControls(result.totalRecords, page, pageSize);
+                        } else {
+                            tableBody.append(
+                                $('<tr>').append(
+                                    $('<td>').attr('colspan', '4').text('Không có tài khoản nào.')
+                                )
+                            );
+                        }
+
+                        
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error fetching accounts:", error);
+                    }
+                });
+            }
+
+          
+            function updatePaginationControls(totalRecords, currentPage, pageSize) {
+                const totalPages = Math.ceil(totalRecords / pageSize);
+                var paginationControls = $('#paginationControls');
+                paginationControls.empty();
+
+                if (currentPage > 1) {
+                    paginationControls.append(
+                        $('<li>')
+                            .addClass('page-item')
+                            .append(
+                                $('<a>')
+                                    .addClass('page-link')
+                                    .text('<')
+                                    .on('click', function () {
+                                        loadAccounts(currentPage - 1);
+                                    })
+                            )
+                    );
+                }
+
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationControls.append(
+                        $('<li>')
+                            .addClass('page-item')
+                            .toggleClass('active', i === currentPage)
+                            .append(
+                                $('<a>')
+                                    .addClass('page-link')
+                                    .text(i)
+                                    .on('click', function () {
+                                        loadAccounts(i);
+                                    })
+                            )
+                    );
+                }
+
+                if (currentPage < totalPages) {
+                    paginationControls.append(
+                        $('<li>')
+                            .addClass('page-item')
+                            .append(
+                                $('<a>')
+                                    .addClass('page-link')
+                                    .text('>')
+                                    .on('click', function () {
+                                        loadAccounts(currentPage + 1);
+                                    })
+                            )
+                    );
+                }
+            }
+
+
+            //Giao nhiệm vụ
+
+            $('#Task').on('click', function () {
+                var accId = $('#modalAccountId').val();
+                var des = $('#taskDescription').val();
+                var status = 1;
+
+                if (!accId || !des) {
+                    alert("Vui lòng nhập đầy đủ thông tin.");
+                    return;
+                }
+
+                if (confirm('Bạn có chắc chắn muốn thêm nhiệm vụ?')) {
+                    $.ajax({
+                        url: '@Url.Action("AddWork", "Work")',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            AccountId: accId,
+                            Description: des,
+                            Status: status 
+                        }),
+                        success: function (response) {
+                            alert('Thêm nhiệm vụ thành công!');
+                            $('#assignTaskModal').modal('hide'); 
+                          
+                        },
+                        error: function (error) {
+                            console.error('Lỗi khi thêm nhiệm vụ:', error);
+                            alert('Đã xảy ra lỗi khi thêm nhiệm vụ. Vui lòng thử lại.');
+                        }
+                    });
+                } else {
+                    alert("Huỷ thêm nhiệm vụ");
+                }
+            });
+            //Hiển thị nhiệm vụ do mình giao
+            function showTask(accId) {
+                $.ajax({
+                    url: '@Url.Action("ViewWork", "Work")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ AccountId: accId }),
+                    success: function (response) {
+                       
+                        $('#taskDetails').empty();
+
+                        
+                        if (response && response.length > 0) {
+                            var taskDetailsHtml = '<ul class="list-group">';
+                          
+                            $.each(response, function (index, task) {
+                                var tt = task.status === 0 ? "Hoàn Thành" : "Chưa hoàn thành";
+                                taskDetailsHtml += '<li class="list-group-item">';
+                                taskDetailsHtml += '<h5>' + task.description + '</h5>';
+                                taskDetailsHtml += '<p>Ngày tạo: ' + task.dateWork + '</p>';
+                                taskDetailsHtml += '<p>Tình trạng: ' + tt  + '</p>';
+                                taskDetailsHtml += '</li>';
+                            });
+
+                            taskDetailsHtml += '</ul>';
+
+                            
+                            $('#taskDetails').html(taskDetailsHtml);
+                        } else {
+                          
+                            $('#taskDetails').html('<p>Không có nhiệm vụ nào.</p>');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error fetching task details:", error);
+                        $('#taskDetails').html('<p>Đã xảy ra lỗi khi lấy thông tin nhiệm vụ. Vui lòng thử lại.</p>');
+                    }
+                });
+            }
+
+
+            loadAccounts(currentPage);
+        });
+
+    </script>
+</body>
+</html>

@@ -62,6 +62,7 @@
     </script>
 
 </head>
+
 <body>
     <div class="container-fluid">
         <header>
@@ -85,6 +86,9 @@
                 <h5 class="px-3">Danh mục</h5>
                 <ul class="nav flex-column">
                     <li class="nav-item">
+                        <a class="nav-link" href="@Url.Action("Index", "Home")">Thông tin người dùng</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link active" href="#" data-bs-toggle="collapse" data-bs-target="#functionsMenu" aria-expanded="false" aria-controls="functionsMenu">
                             Danh sách chức năng
                         </a>
@@ -93,10 +97,7 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/UserInfo">Thông tin người dùng</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/ChangePassword">Đổi mật khẩu</a>
+                        <a class="nav-link" href="@Url.Action("Logout", "Login")">Đăng xuất</a>
                     </li>
                 </ul>
             </nav>

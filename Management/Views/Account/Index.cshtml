@@ -12,11 +12,22 @@
         .modal-header {
             border-bottom: 1px solid #dee2e6;
         }
+
+        .pagination {
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
     <div class="container mt-4">
         <h1 class="mb-4">Danh sách tài khoản</h1>
+
+        <!-- Search Box -->
+        <div class="mb-3">
+            <input type="text" id="searchBox" class="form-control" placeholder="Tìm kiếm tài khoản..." aria-label="Search">
+            <button id="searchButton" class="btn btn-primary mt-2" onclick="searchAccounts()">Tìm kiếm</button>
+        </div>
+
         <table class="table table-striped table-bordered">
             <thead>
                 <tr>
@@ -33,7 +44,14 @@
                 <!-- Data will be inserted here -->
             </tbody>
         </table>
-        <button id="addButton" type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#Modal" onclick="addAccount()">Thêm mới</button>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <button id="addButton" type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#Modal" onclick="addButton()">Thêm mới</button>
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination" id="paginationControls">
+                <!-- Pagination controls will be inserted here -->
+            </ul>
+        </nav>
     </div>
 
     <!-- Modal -->
@@ -61,11 +79,11 @@
                         <div id="passfield" style="display: none;">
                             <div class="mb-3">
                                 <label for="accountPass" class="form-label">Mật khẩu</label>
-                                <input type="password" class="form-control" id="accountPass">
+                                <input type="password" class="form-control" id="Pass">
                             </div>
                             <div class="mb-3">
                                 <label for="accountPass2" class="form-label">Mật khẩu 2</label>
-                                <input type="password" class="form-control" id="accountPass2">
+                                <input type="password" class="form-control" id="Pass2">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -95,114 +113,365 @@
             </div>
         </div>
     </div>
+    <!-- Modal phân quyền -->
+    <div class="modal fade" id="checkModal" tabindex="-1" aria-labelledby="checkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="checkModalLabel">Chọn chức năng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Tên chức năng</th>
+                                <th><input type="checkbox" id="checkAllView" class="function-check-all"> Xem</th>
+                                <th><input type="checkbox" id="checkAllAdd" class="function-check-all"> Thêm</th>
+                                <th><input type="checkbox" id="checkAllEdit" class="function-check-all"> Sửa</th>
+                                <th><input type="checkbox" id="checkAllDelete" class="function-check-all"> Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                           
+                            <!-- Add more rows as needed -->
+                        </tbody>
+                    </table>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                
+                  <button type="button" class="btn btn-primary" id="saveFunctions" onclick="saveQuyen()">Lưu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        $(document).ready(function () {
- //Hiển thị toàn bộ danh sách
+
+
+        const pageSize = 5;
+        let currentPage = 1;
+        let currentSearch = ''; // To store the current search value
+
+        function searchAccounts() {
+            currentSearch = $('#searchBox').val(); // Store the current search term
+            loadAccounts(currentPage, currentSearch);
+        }
+
+        function loadAccounts(page, search) {
             $.ajax({
-                url: '@Url.Action("GetAllAccount", "Account")',
+                url: '@Url.Action("GetAccount", "Account")',
                 type: 'GET',
                 dataType: 'json',
+                data: {
+                    pageNumber: page,
+                    pageSize: pageSize,
+                    search: search
+                },
                 success: function (result) {
                     var tableBody = $('#accountsTableBody');
-                    tableBody.empty(); 
+                    tableBody.empty();
 
                     if (result.data && result.data.length > 0) {
                         $.each(result.data, function (index, account) {
-                            tableBody.append(
-                                $('<tr>').append(
-                                    $('<td>').text(account.id),
-                                    $('<td>').text(account.name),
-                                    $('<td>').text(account.uname),
-                                    $('<td>').text(account.role == 1 ? 'Admin' : 'User'),
-                                     $('<td>').text(account.status == 1 ? 'Active' : 'InActive'),
-                                    $('<td>').text(account.addr),
-                                    $('<td>').append(
-                                        $('<button>')
-                                            .addClass('btn btn-info btn-sm btn-custom')
-                                            .text('Sửa')
-                                            .attr('id', 'editButton')
-                                            .attr('data-id', account.id)
-                                            .attr('data-bs-toggle', 'modal') 
-                                            .attr('data-bs-target', '#Modal') 
-                                            .on('click', function () {
-                                                var accId = account.id;
-                                               
-                                                editAccount(accId);
-                                            }),
-                                        $('<button>').addClass('btn btn-danger btn-sm btn-custom')
-                                            .text('Xóa')
-                                            .attr('id', 'deleteButton')
-                                            .attr('data-id', account.id)
-                                            .attr('data-toggle', 'modal')
-                                            .attr('data-target', '#Modal')
-                                            .on('click', function () {
-                                                deleteAccount($(this).data('id'));
-                                            })
-                                    )
+                            var row = $('<tr>').append(
+                                $('<td>').text(account.id),
+                                $('<td>').text(account.name),
+                                $('<td>').text(account.uname),
+                                $('<td>').text(account.role === 1 ? 'Admin' : 'User'),
+                                $('<td>').text(account.status === 1 ? 'Active' : 'Inactive'),
+                                $('<td>').text(account.addr),
+                                $('<td>').append(
+                                    $('<button>')
+                                        .addClass('btn btn-info btn-sm btn-custom')
+                                        .text('Sửa')
+                                        .attr('id', 'editButton-' + account.id)
+                                        .attr('data-id', account.id)
+                                        .attr('data-bs-toggle', 'modal')
+                                        .attr('data-bs-target', '#Modal')
+                                        .on('click', function () {
+                                            editAccount(account.id);
+                                        }),
+                                    $('<button>')
+                                        .addClass('btn btn-danger btn-sm btn-custom')
+                                        .text('Xóa')
+                                        .attr('id', 'deleteButton-' + account.id)
+                                        .attr('data-id', account.id)
+                                        .on('click', function () {
+                                            deleteAccount(account.id);
+                                        }),
+                                    $('<button>')
+                                        .addClass('btn btn-warning btn-sm btn-custom')
+                                        .text('Kiểm tra')
+                                        .attr('id', 'checkButton-' + account.id)
+                                        .attr('data-id', account.id)
+                                        .on('click', function () {
+                                            checkAccount(account.id);
+                                        })
                                 )
                             );
+                            tableBody.append(row);
                         });
+
+                        updatePaginationControls(result.totalRecords, page, pageSize, search);
                     } else {
                         tableBody.append(
                             $('<tr>').append(
-                                $('<td>').attr('colspan', '5').text('Không có tài khoản nào.')
+                                $('<td>').attr('colspan', '7').text('Không có tài khoản nào.')
                             )
                         );
                     }
+
+                    updateButtonVisibility();
                 },
                 error: function (xhr, status, error) {
                     console.error("Error fetching accounts:", error);
                 }
             });
-   //Hiển thị chức năng
-        $.ajax({
-            url: '@Url.Action("GetChucNang", "Account")',
-            type: 'GET',
-            dataType: 'json',
-            success: function (result) {
-                
-                if (result.data.isAdd === 1) {
-                    $('#addButton').show();
-                } else {
-                    $('#addButton').hide();
-                }
-                if (result.data.isEdit === 1) {
-                    $('#editButton').show();
-                } else {
-                    $('#editButton').hide();
-                }
-                if (result.data.isDelete === 1) {
-                    $('#deleteButton').show();
-                } else {
-                    $('#deleteButton').hide();
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error("Error fetching data:", error); // Xử lý lỗi
-            }
+        }
+
+        $(document).ready(function () {
+            loadAccounts(currentPage, currentSearch); 
         });
-   //
-           
-  //Hiển thị form cập nhật
-           
-            function editAccount(accId) {
+
+        function updatePaginationControls(totalRecords, currentPage, pageSize, search) {
+            const totalPages = Math.ceil(totalRecords / pageSize);
+            var paginationControls = $('#paginationControls');
+            paginationControls.empty();
+
+            if (currentPage > 1) {
+                paginationControls.append(
+                    $('<button>')
+                        .addClass('btn btn-primary')
+                        .text('<')
+                        .on('click', function () {
+                            loadAccounts(currentPage - 1, search); 
+                        })
+                );
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                paginationControls.append(
+                    $('<button>')
+                        .addClass('btn btn-secondary')
+                        .text(i)
+                        .on('click', function () {
+                            loadAccounts(i, search); 
+                        })
+                        .toggleClass('active', i === currentPage)
+                );
+            }
+
+            if (currentPage < totalPages) {
+                paginationControls.append(
+                    $('<button>')
+                        .addClass('btn btn-primary')
+                        .text('>')
+                        .on('click', function () {
+                            loadAccounts(currentPage + 1, search); 
+                        })
+                );
+            }
+        }
+
+         //hiển thị quyền
+            function updateButtonVisibility() {
+                $.ajax({
+                    url: '@Url.Action("GetChucNang", "Account")',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (result) {
+                        console.log("Permissions data:", result.data); 
+
+                        if (result.data.isAdd === 1) {
+                            $('#addButton').show();
+                        } else {
+                            $('#addButton').hide();
+                        }
+
+                        $('button[id^="editButton"]').each(function () {
+                            console.log("Edit permission:", result.data.isEdit);
+                            if (result.data.isEdit === 1) {
+                                $(this).show();
+                            } else {
+                                $(this).hide();
+                            }
+                        });
+
+                        $('button[id^="deleteButton"]').each(function () {
+                            console.log("Delete permission:", result.data.isDelete); 
+                            if (result.data.isDelete === 1) {
+                                $(this).show();
+                            } else {
+                                $(this).hide();
+                            }
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error fetching permissions:", error);
+                    }
+                });
+            }
+
+
+   // Hàm gọi API và hiển thị dữ liệu trong modal
+function checkAccount(id) {
+    $('#checkModal').modal('show');
+  
+    $.ajax({
+        url: '@Url.Action("GetAllQuyen", "Account")', 
+        method: 'GET',
+        data: { id: id },
+        success: function (response) {
+            $('#checkModal tbody').empty();
+            console.log(response);
+            response.data.forEach(function (item) {
                 
+                var row = `
+                    <tr>
+                        <input type="hidden" class="idPq" value="${item.phanQuyenId}">
+                        <input type="hidden" class="idCn" value="${item.id}">
+                        <input type="hidden" class="idAcc" value="${id}">
+
+                        <td>${item.description}</td>
+                        <td><input type="checkbox" class="function-checkbox" data-function="view" ${item.isRead ? 'checked' : ''}></td>
+                        <td><input type="checkbox" class="function-checkbox" data-function="add" ${item.isAdd ? 'checked' : ''}></td>
+                        <td><input type="checkbox" class="function-checkbox" data-function="edit" ${item.isEdit ? 'checked' : ''}></td>
+                        <td><input type="checkbox" class="function-checkbox" data-function="delete" ${item.isDelete ? 'checked' : ''}></td>
+                    </tr>
+                `;
+                $('#checkModal tbody').append(row);
+            });
+        },
+        error: function () {
+            alert('Error fetching data.'); // Thông báo lỗi nếu có
+        }
+    });
+}
+
+// Hàm để thay đổi trạng thái của các checkbox
+function toggleColumnChecks(columnClass, isChecked) {
+    $(columnClass).prop('checked', isChecked);
+
+    // Tự động đánh dấu ô "Xem" nếu bất kỳ ô nào trong cột "Thêm", "Sửa", hoặc "Xóa" được chọn
+    if (columnClass === 'input[data-function="add"]' || 
+        columnClass === 'input[data-function="edit"]' || 
+        columnClass === 'input[data-function="delete"]') {
+        $(this).closest('tr').find('input[data-function="view"]').prop('checked', true);
+    }
+}
+
+// Xử lý sự kiện thay đổi cho các checkbox "Xem", "Thêm", "Sửa", "Xóa"
+$(document).on('change', 'input[data-function="add"], input[data-function="edit"], input[data-function="delete"]', function () {
+    const row = $(this).closest('tr');
+    // Kiểm tra xem bất kỳ ô "Thêm", "Sửa", hoặc "Xóa" trong hàng có được đánh dấu hay không
+    const anyChecked = row.find('input[data-function="add"], input[data-function="edit"], input[data-function="delete"]').is(':checked');
+    // Tự động đánh dấu ô "Xem" nếu bất kỳ ô nào trong ba cột được đánh dấu
+    row.find('input[data-function="view"]').prop('checked', anyChecked);
+});
+
+// Xử lý sự kiện cho việc chọn tất cả các checkbox
+$(document).on('change', '#checkAllView', function () {
+    const isChecked = $(this).is(':checked');
+    toggleColumnChecks('input[data-function="view"]', isChecked);
+});
+
+$(document).on('change', '#checkAllAdd', function () {
+    const isChecked = $(this).is(':checked');
+    toggleColumnChecks('input[data-function="add"]', isChecked);
+});
+
+$(document).on('change', '#checkAllEdit', function () {
+    const isChecked = $(this).is(':checked');
+    toggleColumnChecks('input[data-function="edit"]', isChecked);
+});
+
+$(document).on('change', '#checkAllDelete', function () {
+    const isChecked = $(this).is(':checked');
+    toggleColumnChecks('input[data-function="delete"]', isChecked);
+});
+
+    /////////////////////////////////////////////////////////////////////////
+        function saveQuyen() {
+            var permissions = [];
+
+            $('#checkModal tbody tr').each(function () {
+                var row = $(this);
+                var id = parseInt(row.find('input.idPq').val(), 10) || 0;
+                var idCn = parseInt(row.find('input.idCn').val(), 10) || 0;
+                var idAcc = parseInt(row.find('input.idAcc').val(), 10) || 0;
+
+                var isRead = row.find('input[data-function="view"]').is(':checked') ? 1 : 0;
+                var isAdd = row.find('input[data-function="add"]').is(':checked') ? 1 : 0;
+                var isEdit = row.find('input[data-function="edit"]').is(':checked') ? 1 : 0;
+                var isDelete = row.find('input[data-function="delete"]').is(':checked') ? 1 : 0;
+
+                permissions.push({
+                    id: id,
+                    AccountId: idAcc,
+                    IdCn: idCn,
+                    IsRead: isRead,
+                    IsAdd: isAdd,
+                    IsEdit: isEdit,
+                    IsDelete: isDelete
+                });
+            });
+
+            if (permissions.length === 0) {
+                alert('Không có dữ liệu quyền hợp lệ để lưu.');
+                return;
+            }
+
+            if (confirm('Bạn có chắc chắn muốn lưu quyền?')) {
+                $.ajax({
+                    url: '@Url.Action("UpdateQuyen", "Account")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    data: JSON.stringify(permissions),
+                    success: function (response) {
+                        alert('Quyền đã được lưu thành công.');
+                        $('#checkModal').modal('hide');
+                    },
+                    error: function (xhr, status, error) {
+                        // Kiểm tra nếu lỗi là do phản hồi thành công với thông điệp thành công không mong muốn
+                        if (xhr.responseText.includes("Cập nhật quyền thành công")) {
+                            alert('Quyền đã được lưu thành công.');
+                            location.reload();
+                        } else {
+                            alert('Đã xảy ra lỗi khi lưu quyền: ' + xhr.responseText);
+                        }
+                    }
+                });
+            }
+        
+
+
+        }
+
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////
+
+            function editAccount(accId) {
                 $('#passfield').hide();
+                $('#modalTitle').text('Sửa tài khoản');
+
                 $.ajax({
                     url: '@Url.Action("GetAccById", "Account")',
                     type: 'GET',
                     data: { id: accId },
                     dataType: 'json',
                     success: function (response) {
-
                         if (response && response.data) {
                             var acc = response.data;
-
 
                             $('#accountId').val(acc.id);
                             $('#accountUName').val(acc.uname);
@@ -211,21 +480,18 @@
                             $('#accountStatus').val(acc.status);
                             $('#accountAddr').val(acc.addr);
 
-
                             $('#editModal').modal('show');
                         } else {
                             console.error('No data received');
                         }
                     },
                     error: function (xhr, status, error) {
-
                         console.error('Error occurred:', error);
                     }
                 });
 
-
-                $('#updateList').click(updateList);
-                function updateList() {
+                
+                $('#updateList').off('click').on('click', function () {
                     var accId = $('#accountId').val();
                     var uname = $('#accountUName').val();
                     var name = $('#accountName').val();
@@ -248,10 +514,10 @@
                             type: 'POST',
                             contentType: 'application/json',
                             data: JSON.stringify(accountData),
-                            success: function (response) {
-
+                            success: function () {
                                 $('#editModal').modal('hide');
                                 alert('Tài khoản đã được cập nhật thành công.');
+                                loadAccounts(currentPage); 
                             },
                             error: function (xhr, status, error) {
                                 alert('Cập nhật tài khoản thất bại: ' + xhr.responseText);
@@ -260,73 +526,73 @@
                     } else {
                         console.log('Cập nhật bị hủy');
                     }
-                }
+                });
+            }
 
             
-            }
+            $('#addButton').click(function () {
+                $('#passfield').show();
+                $('#modalTitle').text('Thêm tài khoản'); 
 
+                
+                $('#updateList').off('click').on('click', function (event) {
+                    event.preventDefault(); 
 
-            $('#addButton').click(addAccount);
+                    if (confirm("Bạn có chắc chắn muốn thêm tài khoản này?")) {
+                        var accountData = {
+                            UName: $('#accountUName').val(),
+                            pass: $('#Pass').val(),
+                            pass2: $('#Pass2').val(),
+                            Name: $('#accountName').val(),
+                            Role: $('#accountRole').val(),
+                            Status: $('#accountStatus').val(),
+                            Addr: $('#accountAddr').val()
+                        };
 
-
-
-            function addAccount() {
-                $('#passfield').show();  // Hiển thị trường mật khẩu nếu cần
-
-                function updateList() {
-                    var uname = $('#accountUName').val();
-                    var name = $('#accountName').val();
-                    var role = $('#accountRole').val();
-                    var status = $('#accountStatus').val();
-                    var addr = $('#accountAddr').val();
-                    var pass = $('#accountPass').val();
-                    var pass2 = $('#accountPass2').val();
-
-                    // Ghi lại dữ liệu để kiểm tra
-                    console.log({
-                        UName: uname,
-                        Name: name,
-                        Role: role,
-                        Status: status,
-                        Addr: addr,
-                        pass: pass,
-                        pass2: pass2
-                    });
-                    $('#updateList').click(updateList);
-                    function updateList() {
-                        if (confirm('Bạn có chắc chắn muốn cập nhật thông tin tài khoản này?')) {
-                            $.ajax({
-                                url: '@Url.Action("AddAccount", "Account")',
-                                type: 'POST',
-                                contentType: 'application/json',
-                                data: JSON.stringify({
-                                    UName: uname,
-                                    Name: name,
-                                    Role: role,
-                                    Status: status,
-                                    Addr: addr,
-                                    pass: pass,
-                                    pass2: pass2
-                                }),
-                                success: function (response) {
-                                    $('#editModal').modal('hide');
-                                    alert('Tài khoản đã được cập nhật thành công.');
-                                },
-                                error: function (xhr, status, error) {
-                                    alert('Cập nhật tài khoản thất bại: ' + xhr.responseText);
-                                }
-                            });
-                        } else {
-                            console.log('Cập nhật bị hủy');
-                        }
+                        $.ajax({
+                            url: '@Url.Action("AddAccount", "Account")',
+                            type: 'POST',
+                            data: JSON.stringify(accountData),
+                            contentType: 'application/json',
+                            success: function () {
+                                alert("Tài khoản đã được thêm thành công!");
+                                $('#Modal').modal('hide');
+                                location.reload(); 
+                            },
+                            error: function (xhr, status, error) {
+                                alert("Đã xảy ra lỗi: " + xhr.responseText);
+                            }
+                        });
+                    } else {
+                        console.log('Thêm tài khoản bị hủy');
                     }
+                });
+            });
 
+            
+            function deleteAccount(id) {
+                if (confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteById", "Account")',
+                        type: 'POST',
+                        data: JSON.stringify({ id: id }),
+                        contentType: 'application/json; charset=utf-8',
+                        success: function () {
+                            alert("Tài khoản đã xóa thành công!");
+                            $('#Modal').modal('hide');
+                            location.reload();
+                        },
+                        error: function (xhr, status, error) {
+                            alert("Đã xảy ra lỗi: " + xhr.responseText);
+                        }
+                    });
+                } else {
+                    console.log('Xóa tài khoản bị hủy');
                 }
-
-
             }
- 
-    });
+      
+
     </script>
+
 </body>
 </html>

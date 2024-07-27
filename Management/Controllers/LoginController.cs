@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using QLNV.Data;
 using QLNV.Models.ViewModel;
+using System.Data;
 using System.Linq;
 
 namespace QLNV.Controllers
@@ -32,9 +33,15 @@ namespace QLNV.Controllers
 
                 if (account != null)
                 {
-                
+                    int role = account.Role.HasValue ? account.Role.Value : 0;
                     HttpContext.Session.SetString("Name", account.Name);
                     HttpContext.Session.SetInt32("Id", account.Id);
+                    HttpContext.Session.SetString("Addr", account.Addr);
+                    string roleName = (account.Role == 0) ? "user" : "admin";
+
+                  
+                    HttpContext.Session.SetString("RoleName", roleName);
+
 
 
                     var redirectUrl = Url.Action("Index", "Home");
@@ -48,5 +55,12 @@ namespace QLNV.Controllers
 
             return Json(new { success = false, message = "Thông tin đăng nhập không hợp lệ." });
         }
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+
+            return RedirectToAction("Index", "Login");
+        }
+
     }
 }

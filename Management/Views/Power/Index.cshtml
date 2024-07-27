@@ -1,0 +1,380 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Chức Năng và Quyền</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .btn-custom {
+            background-color: #007bff;
+            color: white;
+        }
+
+            .btn-custom:hover {
+                background-color: #0056b3;
+            }
+    </style>
+</head>
+<body>
+    <input type="hidden" id="txtUserIDChon" />
+    <div class="container mt-4">
+        <h1 class="mb-4">Quản Lý Chức Năng và Quyền</h1>
+        <div class="card">
+            <div class="card-header">
+                Danh Sách Nhân Viên và Chức Năng
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Tên Nhân Viên</th>
+                            <th>Chức Năng</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="functionsTableBody">
+                        <!-- Dữ liệu sẽ được thêm vào đây bằng JavaScript -->
+                    </tbody>
+                </table>
+               
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chi Tiết Quyền -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailModalLabel">Chi Tiết Quyền</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="detailForm">
+                        <input type="hidden" id="userId">
+                        <div class="mb-3">
+                            <label for="functionSelect" class="form-label">Chọn Chức Năng</label>
+                            <select class="form-select" id="functionSelect" required>
+                              
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-custom" id="checkPermissionsButton">Kiểm Tra</button>
+                        <button type="button" class="btn btn-danger" id="deleteFunc">Xoá chức năng</button>
+                    </form>
+                    <div id="resultDiv" class="mt-3" style="display: none;">
+                       
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Thêm Chức Năng -->
+    <div class="modal fade" id="addFunctionModal" tabindex="-1" aria-labelledby="addFunctionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addFunctionModalLabel">Thêm Chức Năng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="addFunctionSelect" class="form-label">Chọn chức năng</label>
+                        <select id="addFunctionSelect" class="form-select">
+                        </select>
+                    </div>
+                    <input type="hidden" id="addFunctionUserId" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="addFunButton">Thêm chức năng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function loadFunctions() {
+            $.ajax({
+                url: '@Url.Action("GetFunction", "Power")',
+                method: 'GET',
+                success: function (data) {
+                    const tableBody = $('#functionsTableBody');
+                    tableBody.empty();
+
+                    const userFunctions = {};
+
+                    data.forEach(account => {
+                        let functionsList = '';
+                        const functions = [];
+
+                        account.functions.forEach(func => {
+                            functionsList += `<li>${func.functionName}</li>`;
+                            functions.push({ id: func.functionId, name: func.functionName, idcn: func.idcn });
+                        });
+
+                        tableBody.append(`
+                                <tr data-id="${account.userId}">
+                                    <td>${account.userName}</td>
+                                    <td><ul>${functionsList}</ul></td>
+                                    <td>
+                                                        <button class="btn btn-info btn-sm detail-btn" onclick='hienChiTietQuyen("${account.userId}")'>Chi Tiết</button>
+                                        <button class="btn btn-success btn-sm add-function-btn" data-bs-toggle="modal" data-bs-target="#addFunctionModal">Thêm chức năng</button>
+                                    </td>
+                                </tr>
+                            `);
+
+                        userFunctions[account.userId] = functions;
+                    });
+
+                    // Đăng ký sự kiện cho nút chi tiết
+                    $('.detail-btn').on('click', function () {
+                        const row = $(this).closest('tr');
+                        const userId = row.data('id');
+                        $('#userId').val(userId);
+
+                        const functionSelect = $('#functionSelect');
+                        functionSelect.empty();
+                        userFunctions[userId].forEach(func => {
+                            functionSelect.append(`<option value="${func.id}">${func.name}</option>`);
+                        });
+                    });
+
+                    // Đăng ký sự kiện cho nút thêm chức năng
+                    $(document).on('click', '.add-function-btn', function () {
+                        const row = $(this).closest('tr');
+                        const userId = row.data('id');
+                        $('#addFunctionUserId').val(userId);
+
+                        $.ajax({
+                            url: '@Url.Action("GetAllFunction", "Function")',
+                            method: 'GET',
+                            contentType: 'application/json; charset=utf-8',
+                            dataType: 'json',
+                            success: function (data) {
+                                const functionSelect = $('#addFunctionSelect');
+                                functionSelect.empty();
+
+                                data.forEach(func => {
+                                    functionSelect.append(`
+                                            <option value="${func.id}" data-name="${func.name}" data-link="${func.link}" data-description="${func.description}">
+                                                ${func.description}
+                                            </option>
+                                        `);
+                                });
+                            },
+                            error: function (error) {
+                                console.error('Lỗi khi tải danh sách chức năng:', error);
+                            }
+                        });
+
+                        $('#addFunctionModal').modal('show');
+                    });
+
+                    // Thêm chức năng
+                    $('#addFunButton').off('click').on('click', function () {
+                        const userId = parseInt($('#addFunctionUserId').val());
+                        const selectedOption = $('#addFunctionSelect').find('option:selected');
+                        const funcId = parseInt(selectedOption.val());
+                        const funcName = selectedOption.data('name');
+                        const funcLink = selectedOption.data('link');
+                        const funcDescription = selectedOption.data('description');
+
+                        if (confirm('Bạn có chắc chắn muốn thêm chức năng?')) {
+                            $.ajax({
+                                url: '@Url.Action("AddFunction", "Function")',
+                                method: 'POST',
+                                contentType: 'application/json',
+                                data: JSON.stringify({
+                                    AccountId: userId,
+                                    IdCn: funcId,
+                                    Name: funcName,
+                                    Link: funcLink,
+                                    Description: funcDescription
+                                }),
+                                success: function (response) {
+                                    alert('Thêm quyền thành công!');
+                                    $('#addFunctionModal').modal('hide');
+                                    loadFunctions();
+                                },
+                                error: function (error) {
+                                    console.error('Lỗi khi thêm quyền:', error);
+                                }
+                            });
+                        } else {
+                            alert("Huỷ thêm quyền");
+                        }
+                    });
+
+                    // Xử lý sự kiện khi nhấn nút kiểm tra quyền
+                    $('#checkPermissionsButton').on('click', function () {
+                        const userId = $('#userId').val();
+                        const selectedFunctionId = $('#functionSelect').val();
+                     
+
+                        $.ajax({
+                            url: '@Url.Action("CheckQuyen", "Power")',
+                            method: 'GET',
+                            data: {
+                                Uid: userId,
+                                Fid: selectedFunctionId
+                            },
+                            success: function (result) {
+                                console.log(result); 
+                                
+                                const permissions = result.length > 0 ? result[0] : { add: 0, edit: 0, delete: 0 };
+                                console.log(result);
+                                // Hiển thị kết quả kiểm tra quyền
+                                $('#resultDiv').html(`
+                        <h5>Kết quả kiểm tra quyền</h5>
+                        <label>
+                            <input type="checkbox" id="chkAdd" ${permissions.add ? 'checked' : ''}/> Add
+                        </label>
+                        <label>
+                            <input type="checkbox" id="chkEdit" ${permissions.edit ? 'checked' : ''}/> Edit
+                        </label>
+                        <label>
+                            <input type="checkbox" id="chkDelete" ${permissions.delete ? 'checked' : ''}/> Delete
+                        </label>
+                        <input type="hidden" id="UserId" value="${userId}"/>
+                        <input type="hidden" id="Idcn" value="${permissions.idcn}"/>
+                        <button id="updatePermissionsButton" data-id="${permissions.id}" data-action="${result.length === 0 ? 'add' : 'update'}" onclick="updateper(this)">
+                            ${result.length === 0 ? 'Thêm mới' : 'Cập nhật'}
+                        </button>
+                    `).show();
+                            },
+                            error: function (error) {
+                                console.error('Lỗi', error);
+                            }
+                        });
+                    });
+
+                    // Xoá chức năng
+                    $('#deleteFunc').on('click', function () {
+                        const funcId = parseInt($('#functionSelect').val());
+
+                        if (funcId) {
+                            if (confirm('Bạn có chắc chắn muốn xoá chức năng?')) {
+                                $.ajax({
+                                    url: '@Url.Action("DeleteFunction", "Function")',
+                                    method: 'POST',
+                                    contentType: 'application/json',
+                                    data: JSON.stringify(funcId),
+                                    success: function (response) {
+                                        alert('Xoá chức năng thành công!');
+                                        $('#detailModal').modal('hide');
+                                        loadFunctions();
+                                    },
+                                    error: function (error) {
+                                        console.error('Lỗi khi xoá:', error);
+                                    }
+                                });
+                            } else {
+                                alert("Huỷ xoá");
+                            }
+                        } else {
+                            alert('Vui lòng chọn chức năng để xoá.');
+                        }
+                    });
+                },
+                error: function (error) {
+                    console.error('Lỗi khi tải danh sách chức năng:', error);
+                }
+            });
+        }
+
+        function updateper(element) {
+            // Lấy giá trị thuộc tính data-action
+            const action = $(element).data('action');
+            const functionId = $("#txtUserIDChon").val();// $(element).data('id'); // Lấy giá trị ID từ thuộc tính data-id
+            const isAddChecked = $('#chkAdd').is(':checked') ? 1 : 0;
+            const isEditChecked = $('#chkEdit').is(':checked') ? 1 : 0;
+            const isDeleteChecked = $('#chkDelete').is(':checked') ? 1 : 0;
+            const idcn = $('#Idcn').val(); // Lấy giá trị từ hidden field Idcn
+
+            if (action === 'update') {
+                // Thực hiện cập nhật quyền
+                if (confirm('Bạn có chắc chắn muốn cập nhật quyền?')) {
+                    $.ajax({
+                        url: '@Url.Action("UpdateQuyen", "Power")',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            Id: functionId,
+                            Add: isAddChecked,
+                            Edit: isEditChecked,
+                            Delete: isDeleteChecked
+                        }),
+                        success: function (response) {
+                            alert('Cập nhật quyền thành công!');
+                        },
+                        error: function (error) {
+                            console.error('Lỗi khi cập nhật quyền:', error);
+                            alert('Đã xảy ra lỗi khi cập nhật quyền. Vui lòng thử lại.');
+                        }
+                    });
+                } else {
+                    alert("Huỷ cập nhật quyền");
+                }
+            } else if (action === 'add') {
+                
+                const accountId = $("#txtUserIDChon").val(); //parseInt($('#userId').val());
+                const funcId = $('#functionSelect').val();// $('#Idcn').val();
+                console.log(accountId);
+                console.log(funcId);
+                if (confirm('Bạn có chắc chắn muốn thêm quyền mới?')) {
+                    $.ajax({
+                        url: '@Url.Action("AddQuyen", "Power")',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            AccountId: accountId,
+                            FunctionsId: funcId,
+                            Add: isAddChecked,
+                            Edit: isEditChecked,
+                            Delete: isDeleteChecked
+                        }),
+                        success: function (response) {
+                            alert('Thêm quyền mới thành công!');
+                            $('#resultDiv').hide(); // Ẩn kết quả sau khi thêm quyền
+                        },
+                        error: function (error) {
+                            console.error('Lỗi khi thêm quyền:', error);
+                            alert('Đã xảy ra lỗi khi thêm quyền. Vui lòng thử lại.');
+                        }
+                    });
+                } else {
+                    alert("Huỷ thêm quyền");
+                }
+            } else {
+                alert("Hành động không hợp lệ.");
+            }
+        }
+
+        function hienChiTietQuyen(userID)
+        {
+            $("#txtUserIDChon").val(userID);
+            $("#detailModal").modal("show");
+        }
+        
+        $(document).ready(function () {
+            loadFunctions();
+        });
+    </script>
+
+
+
+
+
+
+
+</body>
+</html>

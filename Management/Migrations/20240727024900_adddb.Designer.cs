@@ -12,8 +12,8 @@ using QLNV.Data;
 namespace Management.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240724024204_CreateDb")]
-    partial class CreateDb
+    [Migration("20240727024900_adddb")]
+    partial class adddb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,65 @@ namespace Management.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Management.Models.Entities.ChucNang", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Link")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ChucNang");
+                });
+
+            modelBuilder.Entity("Management.Models.Entities.Work", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DateWork")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("Works");
+                });
+
             modelBuilder.Entity("QLNV.Models.Entities.Account", b =>
                 {
                     b.Property<int>("Id")
@@ -32,6 +91,9 @@ namespace Management.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Addr")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -76,14 +138,14 @@ namespace Management.Migrations
                     b.Property<DateTime?>("EditTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("IdCn")
+                        .HasColumnType("int");
+
                     b.Property<string>("Link")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("PhanQuyenId")
-                        .HasColumnType("int");
 
                     b.Property<int?>("Status")
                         .HasColumnType("int");
@@ -92,9 +154,7 @@ namespace Management.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.HasIndex("PhanQuyenId");
-
-                    b.ToTable("Permissions");
+                    b.ToTable("Functions");
                 });
 
             modelBuilder.Entity("QLNV.Models.Entities.PhanQuyen", b =>
@@ -105,7 +165,10 @@ namespace Management.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AccountId")
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("IdCn")
                         .HasColumnType("int");
 
                     b.Property<int?>("IsAdd")
@@ -117,7 +180,7 @@ namespace Management.Migrations
                     b.Property<int?>("IsEdit")
                         .HasColumnType("int");
 
-                    b.Property<int?>("IsUpdate")
+                    b.Property<int?>("IsRead")
                         .HasColumnType("int");
 
                     b.Property<bool?>("Status")
@@ -127,7 +190,18 @@ namespace Management.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("ChucNang");
+                    b.ToTable("PhanQuyen");
+                });
+
+            modelBuilder.Entity("Management.Models.Entities.Work", b =>
+                {
+                    b.HasOne("QLNV.Models.Entities.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("QLNV.Models.Entities.Functions", b =>
@@ -136,10 +210,6 @@ namespace Management.Migrations
                         .WithMany()
                         .HasForeignKey("AccountId");
 
-                    b.HasOne("QLNV.Models.Entities.PhanQuyen", null)
-                        .WithMany("Functions")
-                        .HasForeignKey("PhanQuyenId");
-
                     b.Navigation("Account");
                 });
 
@@ -147,14 +217,11 @@ namespace Management.Migrations
                 {
                     b.HasOne("QLNV.Models.Entities.Account", "Account")
                         .WithMany()
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Account");
-                });
-
-            modelBuilder.Entity("QLNV.Models.Entities.PhanQuyen", b =>
-                {
-                    b.Navigation("Functions");
                 });
 #pragma warning restore 612, 618
         }
