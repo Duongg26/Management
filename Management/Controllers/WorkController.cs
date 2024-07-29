@@ -20,33 +20,87 @@ namespace Management.Controllers
             return View();
           
         }
-        public IActionResult AddWork( [FromBody] WorkViewModel model)
+        public IActionResult AddWork([FromBody] WorkViewModel model)
         {
             var id = HttpContext.Session.GetInt32("Id");
             var work = new Work
             {
-                AccountId = model.AccountId,
-                PerId = id.Value,
-                Description = model.Description,
+                AccountId = id.Value,
+                NoiDung = model.NoiDung,
+                NgayXong=model.NgayXong,
+                TepDinhKemPath=model.TepDinhKemPath,
                 Status = model.Status
+
 
             };
             _context.Works.Add(work);
             _context.SaveChanges();
             return Ok();
         }
-        public IActionResult ViewWork([FromBody] WorkViewModel model) {
-            var id = HttpContext.Session.GetInt32("Id");
-            var work = _context.Works
-         .Where(p => p.AccountId == model.AccountId && p.PerId == id.Value)
-         .ToList();
-
-            return Ok(work);
-        }
-        public IActionResult Display()
+        public IActionResult ListTask()
         {
-            return View();
+            var id = HttpContext.Session.GetInt32("Id");
+
+            if (!id.HasValue)
+            {
+                return BadRequest("User ID not found in session.");
+            }
+
+            // Lấy tất cả các công việc cho người dùng hiện tại
+            var tasks = _context.Works
+                .Where(w => w.AccountId == id.Value)
+                .Select(w => new
+                {
+                    w.Id,
+                    w.NoiDung,
+                    w.NgayGiao,
+                    w.NgayXong,
+                    w.TepDinhKemPath,
+                    w.Status,
+                    AssigneeIds = _context.NguoiLam
+                        .Where(nl => nl.WorkId == w.Id)
+                        .Select(nl => nl.IdNguoiLam)
+                        .ToList()
+                })
+                .ToList(); 
+
+            var result = tasks.Select(w => new
+            {
+                w.Id,
+                w.NoiDung,
+                w.NgayGiao,
+                w.NgayXong,
+                w.TepDinhKemPath,
+                w.Status,
+                AssigneeNames = _context.Accounts
+                    .Where(a => w.AssigneeIds.Contains(a.Id))
+                    .Select(a => a.Name)
+                    .ToList()
+                    .DefaultIfEmpty() 
+                    .Aggregate(
+                        (current, next) => string.IsNullOrEmpty(current) ? next : current + ", " + next 
+                    )
+            }).ToList();
+
+            return Ok(result);
         }
-       
+        public IActionResult GetNguoiLam()
+        {
+            var id = HttpContext.Session.GetInt32("Id");
+            var acc = _context.Accounts
+                .Where(a => a.Id != id)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Name
+                })
+                .ToList();
+            return Ok(acc);
+        }
+
+
+
+
+
     }
 }

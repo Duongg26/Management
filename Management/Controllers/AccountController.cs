@@ -47,6 +47,20 @@ namespace Management.Controllers
             ViewBag.Name = name;
             return View();
         }
+        [HttpGet]
+        public IActionResult GetRoles()
+        {
+           
+                var roles = _context.Roles
+                    .Select(r => new
+                    {
+                        r.Id,
+                        r.Name
+                    })
+                    .ToList();
+
+                return Json(roles);
+            }
 
         [HttpGet]
         public IActionResult GetAccount(int pageNumber = 1, int pageSize = 5, string search = null)
@@ -66,9 +80,22 @@ namespace Management.Controllers
                 }
 
                 var totalRecords = query.Count();
+
                 var accounts = query
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
+                    .Select(a => new
+                    {
+                        a.Id,
+                        a.Name,
+                        Uname = a.Uname, 
+                        RoleName = _context.Roles
+                                     .Where(r => r.Id == a.Role)
+                                     .Select(r => r.Name)
+                                     .FirstOrDefault() ?? "Không thấy chức vụ",
+                        Status = a.Status,
+                        Addr = a.Addr
+                    })
                     .ToList();
 
                 return Json(new
@@ -79,11 +106,13 @@ namespace Management.Controllers
                     pageSize = pageSize
                 });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return StatusCode(500, "Lỗi khi lấy dữ liệu tài khoản.");
             }
         }
+
+
 
 
         public IActionResult GetChucNang()

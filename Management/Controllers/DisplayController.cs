@@ -30,13 +30,13 @@ namespace Management.Controllers
 
             var work = _context.Works
                 .Where(w => w.AccountId == id.Value)
-                .OrderByDescending(w => w.DateWork)
+                .OrderByDescending(w => w.NgayGiao)
                 .Select(w => new
                 {
                     w.Id,
-                    w.PerId,
-                    w.Description,
-                    w.DateWork,
+                    //w.NguoiLam,
+                    w.NoiDung,
+                    w.NgayGiao,
                     w.Status
                 })
                 .ToList();
@@ -45,12 +45,12 @@ namespace Management.Controllers
             var workWithNames = work.Select(work => new
             {
                 work.Id,
-                work.PerId,
-                work.Description,
-                work.DateWork,
+                //work.NguoiLam,
+                work.NoiDung,
+                work.NgayGiao,
                 work.Status,
                 Name = _context.Accounts
-                    .Where(a => a.Id == work.PerId)
+                    //.Where(a => a.Id == work.NguoiLam)
                     .Select(a => a.Name)
                     .FirstOrDefault()
             });

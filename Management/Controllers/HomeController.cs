@@ -31,9 +31,6 @@ namespace QLNV.Controllers
             ViewBag.Role = role;
             return View();
         }
-
-
-
         public IActionResult GetFunctions()
         {
             var accountId = HttpContext.Session.GetInt32("Id");
@@ -43,9 +40,9 @@ namespace QLNV.Controllers
                 return BadRequest("Error: No account ID in session");
             }
 
-            
+
             var roleIds = _context.PhanQuyen
-                .Where(pq => pq.AccountId == accountId&&pq.IsRead==1)
+                .Where(pq => pq.AccountId == accountId && pq.IsRead == 1)
                 .Select(pq => pq.IdCn)
                 .ToList();
 
@@ -73,11 +70,17 @@ namespace QLNV.Controllers
 
             return Json(new { data = model });
         }
-
-
-
-
     }
+
 }
+
+
+
+
+
+
+
+    
+
 
 

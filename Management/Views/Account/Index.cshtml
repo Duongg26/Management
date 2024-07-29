@@ -93,8 +93,7 @@
                         <div class="mb-3">
                             <label for="accountRole" class="form-label">Vai trò</label>
                             <select class="form-select" id="accountRole">
-                                <option value="1">Admin</option>
-                                <option value="0">User</option>
+                              
                             </select>
                         </div>
                         <div class="mb-3">
@@ -153,13 +152,41 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
 
+        $(document).ready(function () {
+            $.ajax({
+                url: '@Url.Action("GetRoles", "Account")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (roles) {
+                    var select = $('#accountRole');
+                    select.empty();
+                    console.log(roles);
+                    // Thêm một tùy chọn mặc định
+                    select.append($('<option>').text('Chọn vai trò').attr('value', ''));
 
+                
+                    $.each(roles, function (index, role) {
+                        var option = $('<option>')
+                            .text(role.name)
+                            .attr('value', role.id);
+
+                     
+
+                        select.append(option);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching roles:", error); 
+                }
+            });
+        });
+        ///.................
         const pageSize = 5;
         let currentPage = 1;
-        let currentSearch = ''; // To store the current search value
+        let currentSearch = ''; 
 
         function searchAccounts() {
-            currentSearch = $('#searchBox').val(); // Store the current search term
+            currentSearch = $('#searchBox').val(); 
             loadAccounts(currentPage, currentSearch);
         }
 
@@ -183,7 +210,7 @@
                                 $('<td>').text(account.id),
                                 $('<td>').text(account.name),
                                 $('<td>').text(account.uname),
-                                $('<td>').text(account.role === 1 ? 'Admin' : 'User'),
+                                $('<td>').text(account.roleName),
                                 $('<td>').text(account.status === 1 ? 'Active' : 'Inactive'),
                                 $('<td>').text(account.addr),
                                 $('<td>').append(
@@ -354,11 +381,9 @@ function checkAccount(id) {
     });
 }
 
-// Hàm để thay đổi trạng thái của các checkbox
 function toggleColumnChecks(columnClass, isChecked) {
     $(columnClass).prop('checked', isChecked);
 
-    // Tự động đánh dấu ô "Xem" nếu bất kỳ ô nào trong cột "Thêm", "Sửa", hoặc "Xóa" được chọn
     if (columnClass === 'input[data-function="add"]' || 
         columnClass === 'input[data-function="edit"]' || 
         columnClass === 'input[data-function="delete"]') {
@@ -366,16 +391,12 @@ function toggleColumnChecks(columnClass, isChecked) {
     }
 }
 
-// Xử lý sự kiện thay đổi cho các checkbox "Xem", "Thêm", "Sửa", "Xóa"
 $(document).on('change', 'input[data-function="add"], input[data-function="edit"], input[data-function="delete"]', function () {
     const row = $(this).closest('tr');
-    // Kiểm tra xem bất kỳ ô "Thêm", "Sửa", hoặc "Xóa" trong hàng có được đánh dấu hay không
     const anyChecked = row.find('input[data-function="add"], input[data-function="edit"], input[data-function="delete"]').is(':checked');
-    // Tự động đánh dấu ô "Xem" nếu bất kỳ ô nào trong ba cột được đánh dấu
     row.find('input[data-function="view"]').prop('checked', anyChecked);
 });
 
-// Xử lý sự kiện cho việc chọn tất cả các checkbox
 $(document).on('change', '#checkAllView', function () {
     const isChecked = $(this).is(':checked');
     toggleColumnChecks('input[data-function="view"]', isChecked);

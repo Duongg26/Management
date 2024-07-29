@@ -1,280 +1,287 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="utf-8" />
-    <title>Danh Sách Tài Khoản</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách công việc</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
     <div class="container mt-4">
-        <h1 class="mb-4">Danh sách tài khoản</h1>
-        <table class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tên</th>
-                    <th>Chức vụ</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody id="accountsTableBody">
-               
-            </tbody>
-        </table>
+        <h2>Danh sách công việc</h2>
 
-        <nav aria-label="Page navigation">
-            <ul class="pagination" id="paginationControls">
-             
-            </ul>
-        </nav>
+        <!-- Thêm ô tìm kiếm và nút thêm mới -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="search-bar">
+                <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm công việc...">
+            </div>
+            <button id="addTask" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">Thêm mới</button>
+        </div>
+
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="assigned-by-me-tab" data-bs-toggle="tab" href="#assigned-by-me" role="tab" aria-controls="assigned-by-me" aria-selected="true">Tôi Giao</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="needs-to-do-tab" data-bs-toggle="tab" href="#needs-to-do" role="tab" aria-controls="needs-to-do" aria-selected="false">Cần Làm</a>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content mt-3" id="myTabContent">
+            <!-- Tôi Giao -->
+            <div class="tab-pane fade show active" id="assigned-by-me" role="tabpanel" aria-labelledby="assigned-by-me-tab">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Mô tả</th>
+                            <th>Ngày giao việc</th>
+                            <th>Ngày hoàn thành</th>
+                            <th>File đính kèm</th>
+                            <th>Trạng thái</th>
+                            <th>Người làm</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assignedByMeTableBody">
+                        <!-- Dữ liệu sẽ được thêm động từ JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Cần Làm -->
+          
+            <div class="tab-pane fade" id="needs-to-do" role="tabpanel" aria-labelledby="needs-to-do-tab">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID Công Việc</th>
+                            <th>Mô Tả</th>
+                            <th>Ngày giao</th>
+                            <th>Ngày phải hoàn thành</th>
+                            <th>File đính kèm</th>
+                            <th>Trạng Thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dữ liệu sẽ được thêm động từ JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <!-- Modal Giao nhiệm vụ -->
-    <div class="modal fade" id="assignTaskModal" tabindex="-1" aria-labelledby="assignTaskModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <!-- Modal Thêm Mới Công Việc -->
+    <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="assignTaskModalLabel">Giao nhiệm vụ</h5>
+                    <h5 class="modal-title" id="addTaskModalLabel">Thêm Mới Công Việc</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="assignTaskForm">
-                        <input type="hidden" id="accountId" />
+                    <form id="addTaskForm" enctype="multipart/form-data">
                         <div class="mb-3">
-                            <label for="taskDescription" class="form-label">Mô tả nhiệm vụ</label>
-                            <textarea class="form-control" id="taskDescription" rows="3" required></textarea>
+                            <label for="taskDescription" class="form-label">Nội dung công việc</label>
+                            <input type="text" class="form-control" id="taskDescription" required>
                         </div>
-                        <div class="d-flex justify-content-end">
-                            <input type="hidden" id="modalAccountId" value="">
-                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Đóng</button>
-                            <button type="submit" id="Task" class="btn btn-primary" onclick="Task()">Giao nhiệm vụ</button>
+                        <div class="mb-3">
+                            <label for="taskAttachment" class="form-label">Tệp đính kèm</label>
+                            <input type="file" class="form-control" id="taskAttachment">
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDueDate" class="form-label">Ngày hoàn thành</label>
+                            <input type="date" class="form-control" id="taskDueDate">
                         </div>
                     </form>
                 </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" id="saveTaskButton" onclick="saveTask()">Lưu công việc</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Xem chi tiết -->
-    <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <!-- Modal chỉnh sửa công việc -->
+    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="taskDetailModalLabel">Chi tiết nhiệm vụ</h5>
+                    <h5 class="modal-title" id="taskModalLabel">Chi Tiết Công Việc</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="taskDetails">
-                       
+                    <div class="mb-3">
+                        <label for="NoiDung" class="form-label">Mô Tả Công Việc</label>
+                        <textarea id="NoiDung" class="form-control" rows="3"></textarea>
                     </div>
+                    <!-- Ô tìm kiếm và danh sách người làm -->
+                    <div class="mb-3">
+                        <label for="searchAssignees" class="form-label">Tìm kiếm người thực hiện</label>
+                        <input type="text" id="searchAssignees" class="form-control search-box" placeholder="Nhập tên người thực hiện">
+                        <label for="taskAssignees" class="form-label">Người Thực Hiện</label>
+                        <div id="NguoiLam">
+                          
+                        </div>
+                    </div>
+                 
+                    <div class="mb-3">
+                        <label for="NgayXong" class="form-label">Ngày Hết Hạn</label>
+                        <input type="date" id="NgayXong" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" id="saveChanges">Lưu Thay Đổi</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
     <script>
         $(document).ready(function () {
-            const pageSize = 5;
-            let currentPage = 1;
-
-           
-            function loadAccounts(page) {
-                $.ajax({
-                    url: '@Url.Action("GetAllAccount", "Account")',
-                    type: 'GET',
-                    dataType: 'json',
-                    data: { pageNumber: page, pageSize: pageSize },
-                    success: function (result) {
-                        var tableBody = $('#accountsTableBody');
-                        tableBody.empty();
-
-                        if (result.data && result.data.length > 0) {
-                            $.each(result.data, function (index, account) {
-                                var row = $('<tr>').append(
-                                    $('<td>').text(account.id),
-                                    $('<td>').text(account.name),
-                                    $('<td>').text(account.role === 1 ? 'Admin' : 'User'),
-                                    $('<td>').append(
-                                        $('<button>')
-                                            .addClass('btn btn-info btn-sm')
-                                            .text('Xem chi tiết')
-                                            .attr('id', 'editButton-' + account.id)
-                                            .attr('data-id', account.id)
-                                            .attr('data-bs-toggle', 'modal')
-                                            .attr('data-bs-target', '#taskDetailModal')
-                                            .on('click', function () {
-                                                var accId = account.id;
-                                                showTask(accId);
-                                            }),
-                                        $('<button>')
-                                            .addClass('btn btn-success btn-sm ms-2')
-                                            .text('Giao nhiệm vụ')
-                                            .attr('id', 'assignTaskButton-' + account.id)
-                                            .attr('data-id', account.id)
-                                            .attr('data-bs-toggle', 'modal')
-                                            .attr('data-bs-target', '#assignTaskModal')
-                                            .on('click', function () {
-                                                var accId = $(this).attr('data-id');
-                                                $('#modalAccountId').val(accId);
-                                            })
-                                    )
-                                );
-                                tableBody.append(row);
-                            });
-
-                            updatePaginationControls(result.totalRecords, page, pageSize);
-                        } else {
-                            tableBody.append(
-                                $('<tr>').append(
-                                    $('<td>').attr('colspan', '4').text('Không có tài khoản nào.')
-                                )
-                            );
-                        }
-
-                        
-                    },
-                    error: function (xhr, status, error) {
-                        console.error("Error fetching accounts:", error);
-                    }
-                });
-            }
-
-          
-            function updatePaginationControls(totalRecords, currentPage, pageSize) {
-                const totalPages = Math.ceil(totalRecords / pageSize);
-                var paginationControls = $('#paginationControls');
-                paginationControls.empty();
-
-                if (currentPage > 1) {
-                    paginationControls.append(
-                        $('<li>')
-                            .addClass('page-item')
-                            .append(
-                                $('<a>')
-                                    .addClass('page-link')
-                                    .text('<')
-                                    .on('click', function () {
-                                        loadAccounts(currentPage - 1);
-                                    })
-                            )
-                    );
-                }
-
-                for (let i = 1; i <= totalPages; i++) {
-                    paginationControls.append(
-                        $('<li>')
-                            .addClass('page-item')
-                            .toggleClass('active', i === currentPage)
-                            .append(
-                                $('<a>')
-                                    .addClass('page-link')
-                                    .text(i)
-                                    .on('click', function () {
-                                        loadAccounts(i);
-                                    })
-                            )
-                    );
-                }
-
-                if (currentPage < totalPages) {
-                    paginationControls.append(
-                        $('<li>')
-                            .addClass('page-item')
-                            .append(
-                                $('<a>')
-                                    .addClass('page-link')
-                                    .text('>')
-                                    .on('click', function () {
-                                        loadAccounts(currentPage + 1);
-                                    })
-                            )
-                    );
-                }
-            }
-
-
-            //Giao nhiệm vụ
-
-            $('#Task').on('click', function () {
-                var accId = $('#modalAccountId').val();
-                var des = $('#taskDescription').val();
-                var status = 1;
-
-                if (!accId || !des) {
-                    alert("Vui lòng nhập đầy đủ thông tin.");
-                    return;
-                }
-
-                if (confirm('Bạn có chắc chắn muốn thêm nhiệm vụ?')) {
-                    $.ajax({
-                        url: '@Url.Action("AddWork", "Work")',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({
-                            AccountId: accId,
-                            Description: des,
-                            Status: status 
-                        }),
-                        success: function (response) {
-                            alert('Thêm nhiệm vụ thành công!');
-                            $('#assignTaskModal').modal('hide'); 
-                          
-                        },
-                        error: function (error) {
-                            console.error('Lỗi khi thêm nhiệm vụ:', error);
-                            alert('Đã xảy ra lỗi khi thêm nhiệm vụ. Vui lòng thử lại.');
-                        }
-                    });
-                } else {
-                    alert("Huỷ thêm nhiệm vụ");
-                }
-            });
-            //Hiển thị nhiệm vụ do mình giao
-            function showTask(accId) {
-                $.ajax({
-                    url: '@Url.Action("ViewWork", "Work")',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ AccountId: accId }),
-                    success: function (response) {
-                       
-                        $('#taskDetails').empty();
-
-                        
-                        if (response && response.length > 0) {
-                            var taskDetailsHtml = '<ul class="list-group">';
-                          
-                            $.each(response, function (index, task) {
-                                var tt = task.status === 0 ? "Hoàn Thành" : "Chưa hoàn thành";
-                                taskDetailsHtml += '<li class="list-group-item">';
-                                taskDetailsHtml += '<h5>' + task.description + '</h5>';
-                                taskDetailsHtml += '<p>Ngày tạo: ' + task.dateWork + '</p>';
-                                taskDetailsHtml += '<p>Tình trạng: ' + tt  + '</p>';
-                                taskDetailsHtml += '</li>';
-                            });
-
-                            taskDetailsHtml += '</ul>';
-
-                            
-                            $('#taskDetails').html(taskDetailsHtml);
-                        } else {
-                          
-                            $('#taskDetails').html('<p>Không có nhiệm vụ nào.</p>');
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error("Error fetching task details:", error);
-                        $('#taskDetails').html('<p>Đã xảy ra lỗi khi lấy thông tin nhiệm vụ. Vui lòng thử lại.</p>');
-                    }
-                });
-            }
-
-
-            loadAccounts(currentPage);
+            LoadTask();
         });
 
+        function LoadTask() {
+            $.ajax({
+                url: '@Url.Action("ListTask", "Work")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    var tbody = $('#assignedByMeTableBody');
+                    tbody.empty();
+
+                    $.each(data, function (index, work) {
+                        var row = $('<tr>');
+
+                        row.append($('<td>').text(work.id));
+                        row.append($('<td>').text(work.noiDung));
+                        var ngayGiaoFormatted = new Date(work.ngayGiao).toLocaleDateString('vi-VN');
+                        row.append($('<td>').text(ngayGiaoFormatted));
+                        var ngayXongFormatted = new Date(work.ngayXong).toLocaleDateString('vi-VN');
+                        row.append($('<td>').text(ngayXongFormatted));
+                        row.append($('<td>').text(work.tepDinhKemPath));
+                        var statusText = work.status == 0 ? "Chưa hoàn thành" : "Đã hoàn thành";
+                        row.append($('<td>').text(statusText));
+                        row.append($('<td>').text(work.assigneeNames));
+
+                        var actionButton = $('<button class="btn btn-primary">');
+                        actionButton.attr('data-id', work.id);                    
+                            actionButton.text('Sửa').attr('data-action', 'edit').off('click').on('click', function () {
+                                editTask(work.id, work.noiDung);
+                            });
+                        
+
+                        row.append($('<td>').append(actionButton));
+                        tbody.append(row);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching data: " + error);
+                }
+            });
+        }
+        //Thêm việc
+        function saveTask() {
+            var des = $('#taskDescription').val();
+            var teppath = $('#taskAttachment').val();
+            var ngayxong = $('#taskDueDate').val();
+            if (confirm("Bạn có chắc chắn muốn thêm công việc này?")) {
+                $.ajax({
+                    url: '@Url.Action("AddWork", "Work")',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        NoiDung: des,
+                        NgayXong: ngayxong,
+                        TepDinhKemPath: teppath
+                    }),
+                    contentType: 'application/json',
+                    success: function () {
+                        alert("Công việc đã được thêm thành công!");
+                        $('#addTaskModal').modal('hide');
+                        LoadTask();
+                    },
+                    error: function (xhr, status, error) {
+                        alert("Đã xảy ra lỗi: " + xhr.responseText);
+                    }
+                });
+            } else {
+                console.log('Thêm công việc bị hủy');
+            }
+        }
+
+    //Giao cho người làm
+        function editTask(taskId, noidung) {
+            $('#taskModal').modal('show');
+            $('#NoiDung').val(noidung);
+           
+            $.ajax({
+                url: '@Url.Action("GetNguoiLam", "Work")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    var tableHtml = '<table class="table table-striped">';
+                    tableHtml += '<thead><tr><th>Chọn</th><th>Tên</th></tr></thead>';
+                    tableHtml += '<tbody>';
+
+                    data.forEach(function (acc) {
+                        tableHtml += `<tr>
+                                        <td><input type="checkbox" class="form-check-input assignee-checkbox" data-id="${acc.id}"></td>
+                                        <td>${acc.name}</td>
+                                    </tr>`;
+                    });
+
+                    tableHtml += '</tbody></table>';
+                    $('#NguoiLam').html(tableHtml);
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching assignees: " + error);
+                }
+            });
+
+            //Ấn nút lưu
+            $('#saveChanges').on('click', function () {
+
+                
+                var noidung = $('#NoiDung').val();
+                var NguoiChon = [];
+                $('.assignee-checkbox:checked').each(function () {
+                    NguoiChon.push($(this).data('id'));
+                });
+              
+            });
+        }
+        //
+        $('#searchAssignees').on('input', function () {
+            var searchValue = $(this).val().toLowerCase();
+            $('#NguoiLam .table tbody tr').each(function () {
+                var rowText = $(this).text().toLowerCase();
+                $(this).toggle(rowText.indexOf(searchValue) > -1);
+            });
+        });
+
+        $('#searchInput').on('input', function () {
+            var query = $(this).val().toLowerCase();
+
+            $('#assignedByMeTableBody tr').each(function () {
+                var description = $(this).find('td').eq(1).text().toLowerCase();
+                $(this).toggle(description.includes(query));
+            });
+
+            $('#needsToDoTableBody tr').each(function () {
+                var description = $(this).find('td').eq(1).text().toLowerCase();
+                $(this).toggle(description.includes(query));
+            });
+        });
     </script>
+
 </body>
 </html>

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QLNV.Data;
 
@@ -11,9 +12,11 @@ using QLNV.Data;
 namespace Management.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20240729022619_add2907")]
+    partial class add2907
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,30 +53,6 @@ namespace Management.Migrations
                     b.ToTable("ChucNang");
                 });
 
-            modelBuilder.Entity("Management.Models.Entities.NguoiLam", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("IdNguoiLam")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("WorkId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WorkId");
-
-                    b.ToTable("NguoiLam");
-                });
-
             modelBuilder.Entity("Management.Models.Entities.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -102,22 +81,21 @@ namespace Management.Migrations
                     b.Property<int>("AccountId")
                         .HasColumnType("int");
 
-                    b.Property<DateOnly>("NgayGiao")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("DateWork")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateOnly>("NgayXong")
-                        .HasColumnType("date");
-
-                    b.Property<string>("NoiDung")
+                    b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("IsGroup")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NguoiLam")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
-
-                    b.Property<string>("TepDinhKemPath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -192,17 +170,6 @@ namespace Management.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PhanQuyen");
-                });
-
-            modelBuilder.Entity("Management.Models.Entities.NguoiLam", b =>
-                {
-                    b.HasOne("Management.Models.Entities.Work", "Work")
-                        .WithMany()
-                        .HasForeignKey("WorkId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Work");
                 });
 
             modelBuilder.Entity("Management.Models.Entities.Work", b =>
