@@ -12,8 +12,8 @@ using QLNV.Data;
 namespace Management.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240727105458_addDbnew")]
-    partial class addDbnew
+    [Migration("20240730070336_addDb")]
+    partial class addDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,6 +53,69 @@ namespace Management.Migrations
                     b.ToTable("ChucNang");
                 });
 
+            modelBuilder.Entity("Management.Models.Entities.NguoiLam", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("IdNguoiLam")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkId");
+
+                    b.ToTable("NguoiLam");
+                });
+
+            modelBuilder.Entity("Management.Models.Entities.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("Management.Models.Entities.Tep", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Link")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("WorkId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkId");
+
+                    b.ToTable("Teps");
+                });
+
             modelBuilder.Entity("Management.Models.Entities.Work", b =>
                 {
                     b.Property<int>("Id")
@@ -64,18 +127,34 @@ namespace Management.Migrations
                     b.Property<int>("AccountId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("DateWork")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
+                    b.Property<string>("DsNguoiLam")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PerId")
-                        .HasColumnType("int");
+                    b.Property<string>("DsTep")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly>("NgayGiao")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("NgayXong")
+                        .HasColumnType("date");
+
+                    b.Property<string>("NoiDung")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<string>("TenCV")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TepDinhKemPath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -118,45 +197,6 @@ namespace Management.Migrations
                     b.ToTable("Accounts");
                 });
 
-            modelBuilder.Entity("QLNV.Models.Entities.Functions", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AccountId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("EditTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("IdCn")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Link")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccountId");
-
-                    b.ToTable("Functions");
-                });
-
             modelBuilder.Entity("QLNV.Models.Entities.PhanQuyen", b =>
                 {
                     b.Property<int>("Id")
@@ -191,6 +231,28 @@ namespace Management.Migrations
                     b.ToTable("PhanQuyen");
                 });
 
+            modelBuilder.Entity("Management.Models.Entities.NguoiLam", b =>
+                {
+                    b.HasOne("Management.Models.Entities.Work", "Work")
+                        .WithMany()
+                        .HasForeignKey("WorkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Work");
+                });
+
+            modelBuilder.Entity("Management.Models.Entities.Tep", b =>
+                {
+                    b.HasOne("Management.Models.Entities.Work", "Work")
+                        .WithMany()
+                        .HasForeignKey("WorkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Work");
+                });
+
             modelBuilder.Entity("Management.Models.Entities.Work", b =>
                 {
                     b.HasOne("QLNV.Models.Entities.Account", "Account")
@@ -198,15 +260,6 @@ namespace Management.Migrations
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Account");
-                });
-
-            modelBuilder.Entity("QLNV.Models.Entities.Functions", b =>
-                {
-                    b.HasOne("QLNV.Models.Entities.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId");
 
                     b.Navigation("Account");
                 });

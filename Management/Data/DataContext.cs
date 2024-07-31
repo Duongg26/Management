@@ -17,5 +17,6 @@ namespace QLNV.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<Work> Works { get; set; }
         public DbSet<NguoiLam> NguoiLam { get; set; }
+        public DbSet<Tep> Teps { get; set; }
     }
 }

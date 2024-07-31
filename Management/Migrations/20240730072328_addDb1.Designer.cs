@@ -12,8 +12,8 @@ using QLNV.Data;
 namespace Management.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240729125647_add29072")]
-    partial class add29072
+    [Migration("20240730072328_addDb1")]
+    partial class addDb1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -94,6 +94,28 @@ namespace Management.Migrations
                     b.ToTable("Roles");
                 });
 
+            modelBuilder.Entity("Management.Models.Entities.Tep", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Link")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("WorkId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkId");
+
+                    b.ToTable("Teps");
+                });
+
             modelBuilder.Entity("Management.Models.Entities.Work", b =>
                 {
                     b.Property<int>("Id")
@@ -104,6 +126,14 @@ namespace Management.Migrations
 
                     b.Property<int>("AccountId")
                         .HasColumnType("int");
+
+                    b.Property<string>("DsNguoiLam")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DsTep")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly>("NgayGiao")
                         .HasColumnType("date");
@@ -118,7 +148,7 @@ namespace Management.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("TepDinhKemPath")
+                    b.Property<string>("TenCV")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -198,6 +228,17 @@ namespace Management.Migrations
                 });
 
             modelBuilder.Entity("Management.Models.Entities.NguoiLam", b =>
+                {
+                    b.HasOne("Management.Models.Entities.Work", "Work")
+                        .WithMany()
+                        .HasForeignKey("WorkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Work");
+                });
+
+            modelBuilder.Entity("Management.Models.Entities.Tep", b =>
                 {
                     b.HasOne("Management.Models.Entities.Work", "Work")
                         .WithMany()

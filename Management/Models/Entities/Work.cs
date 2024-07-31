@@ -9,9 +9,12 @@ namespace Management.Models.Entities
         public int AccountId { get; set; }   //Id người giao
         public DateOnly NgayGiao { get; set; }
         public DateOnly NgayXong { get; set; }
+        public string TenCV { get; set; }
         public string NoiDung { get; set; }
         public int Status { get; set; }
-        public string TepDinhKemPath { get; set; }
+        public string DsNguoiLam {  get; set; }
+        public string DsTep {  get; set; }
+
 
         public Work()
         {
